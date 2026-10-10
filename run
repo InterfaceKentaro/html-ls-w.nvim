@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+runner="podman"
+image="html_ls"
+docker_file=""
+
+case "$runner" in
+    "docker")
+        [[ -z $(docker image ls -f "{{.Repository}}" | grep -e "^${image:?}$") ]] && {
+            docker build -t ${image} -f ${docker_file:-"./Dockerfile"} .
+        }
+        ;;
+    "podman")
+        [[ -z $(podman images --format "{{.Repository}}" | grep -e "^localhost/${image:?}$") ]] && {
+            podman build -t ${image} -f ${docker_file:-"./Dockerfile"} .
+        }
+        ;;
+    *)
+        echo "Unknown runner"
+        exit 1
+        ;;
+esac
+
+p=$(pwd)
+
+$runner run --rm -i \
+    -v $p:$p \
+    -w $p \
+    ${image}
